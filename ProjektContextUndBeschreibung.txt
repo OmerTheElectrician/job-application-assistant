@@ -1,0 +1,149 @@
+hallo, ich komme jetzt wieder mit einer kompletten Instruktion für dich mit wie du das ganze gestalten/ändern sollst. Das ist eine Instruktion für alle KIs die ich nutzen werden, d.h. für die KI die ich fürs frontend nutzen werde (v0.dev), für die KI die ich fürs backend nutzen werden (codeium), usw. 
+
+lese dir die ganze Datei sorgfältig durch, merke dir was du im Kopf behalten sollst für die Zukunft dieses Projekts/dieser Webseite. mache schließlich deinen teil in der Anpassung der Webseite.
+
+Komplette Instruktion:
+
+Wichtige Kurzzusammenfassung für den überblick:
+Das Projekt soll darauf abzielen, ganze Bewerbungen (CV, Anschreiben, etc.) und alle solche Unterlagen (nicht nur Lebensläufe) zu korrigieren und zu verbessern. Die KI wird nicht nur die Lebensläufe optimieren, sondern auch Feedback geben (z.B. zu Formulierungen, Formatierungen, Struktur, Grammatik etc:
+Fehlerhafte Überschrift-Formatierung, Inkonsistente Schriftarten und -größen, Schlecht formuliertes und unprofessionelles Bewerbungsschreiben (inkorrekte Grammatik, schlechte Wortwahl, inkorrekter Satzbau,...), Fehlerhafte Aufzählungszeichen oder Listen, Verwendung von Absätzen statt von Tabellen für Daten, Fehlende oder inkorrekte Verwendung von Spaltentrennungen, Mangelnde Verwendung von Kopf- und Fußzeilen, Unpassende Verwendung von Zeilenabständen, Falsche oder inkorrekte Verwendung von Tabellen oder Feldern, Unvollständige Abschnitte) und dem Nutzer eine verbesserte Version der Bewerbung präsentieren. Außerdem soll der Nutzer die Möglichkeit haben, die neue, verbesserte Version der verbesserten Bewerbung herunterzuladen oder zu speichern.
+
+Das bedeutet, dass sowohl die Textextraktion, die Fehlerkorrektur als auch die optimierte Version der Bewerbung in das Projekt integriert werden müssen, mit einer klaren Benutzeroberfläche für den Feedbackprozess.
+
+Der Nutzer wird also:
+
+Hochladen und sehen, was extrahiert wurde.
+
+Änderungen akzeptieren oder ablehnen können (basierend auf den Verbesserungsvorschlägen).
+
+Am Ende die optimierte Version der Bewerbung erhalten, die dann auch zum Download bereitsteht.
+
+Der Fokus liegt darauf, dass der Feedbackprozess einfach und klar bleibt, ohne zusätzliche Komplikationen wie z.B. komplexe Designs oder Job-Matching-Mechanismen.
+
+
+Projekt Details: KI-basierte Bewerbung-Optimierungsplattform:
+1. Frontend (Benutzeroberfläche)
+Das Frontend ist die Benutzeroberfläche, die mit der Web-App interagiert und die Daten darstellt. Die KI wird dabei nur den Code und die Design-Aspekte generieren.
+
+Funktionalitäten:
+
+Startseite:
+
+Beschreibung: Eine einfache, gut strukturierte Startseite mit Grundinformationen über die Plattform. Die Webseite soll möglichst einseitig sein, außer für notwendige Webseiten wie z.B. die Login-Seite, für ein erleichtertes Nutzen.
+
+KI-Aufgabe: Design der Startseite (Gestaltung von Layouts und Elementen) mit grundlegenden Textinhalten, wie Begrüßung, Titel und kurzem Überblick der Funktionen.
+
+Technologie: HTML, CSS (Design), JavaScript (Interaktivität)
+
+Upload-Bereich für Bewerbungsunterlagen-Daten (PDF/DOCX):
+
+Beschreibung: Ein Bereich, in dem Nutzer alle ihre Bewerbungsunterlagen hochladen können.
+
+KI-Aufgabe: Bereitstellung des Codes zur Erstellung eines File Uploads, Implementierung einer Fortschrittsanzeige.
+
+Technologie: JavaScript (HTML5 File API), Backend-Integration zum Hochladen der Dateien
+
+Anzeige der extrahierten Bewerbungs-Daten:
+
+Beschreibung: Die hochgeladenen Bewerbungen sollen analysiert und die Daten (Name, Skills, Erfahrung, Anschreiben) strukturiert angezeigt werden.
+
+KI-Aufgabe: Implementierung der Datenanzeige in einer klar strukturierten Tabelle oder einem Formular. Die KI soll den Code erstellen, um diese Informationen anzuzeigen.
+
+Technologie: JavaScript, HTML, CSS
+
+Anzeige von Verbesserungsvorschlägen:
+
+Beschreibung: Die KI analysiert die Bewerbung und gibt Verbesserungsvorschläge (z.B. bessere Formulierungen oder Formatierungen).
+
+KI-Aufgabe: Die KI soll Code generieren, der dem Nutzer Verbesserungsvorschläge anzeigt, sowie eine einfache Interaktionsmöglichkeit, um Änderungen zu akzeptieren oder abzulehnen.
+
+Technologie: JavaScript, API-Aufrufe zu Backend (zum Erhalten von Verbesserungsvorschlägen)
+
+Exportfunktion (Optimierte Bewerbung):
+
+Beschreibung: Der Nutzer kann die verbesserte Bewerbung im gewünschten Format herunterladen.
+
+KI-Aufgabe: Generierung von Code zur Umsetzung der Exportfunktion für PDF und DOCX.
+
+Technologie: JavaScript, Backend
+
+2. Backend (Datenverarbeitung & KI-Analyse)
+Das Backend kümmert sich um die logische Verarbeitung, die KI-Analyse und das Speichern der Daten. Hier wird die meiste Arbeit durch KI erledigt.
+
+Funktionalitäten:
+
+Textextraktion aus PDF/DOCX:
+
+Beschreibung: Die KI muss Text aus hochgeladenen PDF- oder DOCX-Dateien extrahieren.
+
+KI-Aufgabe: Verwendung von python-docx und PyMuPDF, um Text aus den Dateien zu extrahieren. Kein OCR verwenden.
+
+Technologie: Python, python-docx, PyMuPDF, Flask/Django
+
+Strukturierte Analyse der Bewerbungsinhalte:
+
+Beschreibung: Die extrahierten Daten werden in Kategorien (z. B. Name, Skills, Erfahrung, Anschreiben) strukturiert.
+
+KI-Aufgabe: Verwendung von spaCy oder Hugging Face für die Verarbeitung und Kategorisierung des Textes.
+
+Technologie: Python, spaCy/Hugging Face
+
+Grammatik- & Sprachoptimierung:
+
+Beschreibung: Verbesserung der Sprache in der Bewerbung, z. B. durch Korrektur von Grammatik und Rechtschreibung.
+
+KI-Aufgabe: Integration von LanguageTool oder GPT-3/4 für die Optimierung der Formulierungen.
+
+Technologie: API-Integration von LanguageTool oder GPT-3/4
+
+Vorschläge für bessere Formulierungen & Ergänzungen:
+
+Beschreibung: Die KI schlägt alternative Formulierungen und Ergänzungen vor.
+
+KI-Aufgabe: Generierung von verbesserten Formulierungen und Ergänzungen (z. B. durch GPT-3).
+
+Technologie: GPT-3 oder GPT-4 API (muss kostenlos sein)
+
+Datenbank für gespeicherte Bewerbungen:
+
+Beschreibung: Speichern der Bewerbungen und Optimierungen in einer Datenbank.
+
+KI-Aufgabe: Generierung des Datenbankmodells (z. B. MySQL oder SQLite) und die Integration zur Speicherung. (Entfernen, da keine Speicherung im Projekt vorgesehen ist)
+
+Technologie: SQL, Django/Flask
+
+3. Datenbank & Speicherung
+(Dieser Abschnitt wurde entfernt, da keine Benutzerdaten gespeichert werden und keine Versionierung erforderlich ist.)
+
+4. Deployment & Skalierbarkeit
+Für das Deployment sind einfache Lösungen gefragt, da das Projekt keine hohe Skalierbarkeit braucht.
+
+Funktionalitäten:
+
+Hosting der Web-App:
+
+Beschreibung: Die Web-App muss gehostet und öffentlich zugänglich gemacht werden.
+
+KI-Aufgabe: Bereitstellung des Codes für Hosting auf GitHub Pages, Vercel oder Firebase.
+
+Technologie: GitHub Pages, Vercel, Firebase
+
+API-Schnittstellen für Erweiterungen:
+
+Beschreibung: APIs für zukünftige Erweiterungen, z.B. das Einbinden von externen Tools.
+
+KI-Aufgabe: Erstellung von API-Endpunkten zur Interaktion mit anderen Services.
+
+Technologie: REST API (Flask/Django)
+
+Responsives Design:
+
+Beschreibung: Die Seite muss auf alle Gerätearten (z.B. Desktop, Handy, Tablet,...) so gut wie möglich funktionieren.
+
+KI-Aufgabe: Verwendung von CSS Media Queries und Bootstrap für Responsivität.
+
+Technologie: HTML, CSS, Bootstrap
+
+Wichtig zu merken:
+Die komplexeren Funktionen, wie etwa Echtzeit-Änderungen in Dokumenten, die Vorschläge für Branchen-Designs oder ein login system und eine datenbank, sollten für den Schulprojekt nicht implementiert werden, um den Fokus auf die wesentlichen Kernfunktionen zu legen.
+
