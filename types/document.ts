@@ -64,71 +64,31 @@ export interface CVSection {
 }
 
 export interface DocumentMetadata {
-  title?: string;
-  author?: string;
-  createdAt?: Date;
-  lastModified?: Date;
-  application?: {
-    software?: string;
-    version?: string;
-    producer?: string;
-  };
-  language?: {
-    primary: string;
-    secondary?: string[];
-  };
-  keywords?: string[];
-  category?: 'resume' | 'cv' | 'coverLetter' | 'recommendation' | 'certificate';
-  template?: {
-    name?: string;
-    source?: string;
-    version?: string;
-  };
-  statistics?: {
-    pageCount?: number;
-    wordCount?: number;
-    characterCount?: number;
-    imageCount?: number;
+  created: string;
+  lastModified: string;
+}
+
+export interface DocumentContent {
+  text: string;
+  formatting: {
+    isHeading: boolean;
+    isBold: boolean;
+    isItalic: boolean;
+    isList: boolean;
   };
 }
 
+export interface DocumentSection {
+  content: DocumentContent[];
+  type?: string;
+  title?: string;
+}
+
 export interface FormattedDocument {
-  sections: CVSection[];
-  metadata: DocumentMetadata;
-  styling?: {
-    theme?: {
-      primary: string;
-      secondary: string;
-      accent: string;
-      background: string;
-    };
-    fonts?: {
-      heading: string;
-      body: string;
-    };
-    spacing?: {
-      unit: number;
-      sectionGap: number;
-      paragraphGap: number;
-    };
-    layout?: {
-      maxWidth?: number;
-      columns?: number;
-      margins?: {
-        top: number;
-        bottom: number;
-        left: number;
-        right: number;
-      };
-    };
-  };
-  analysis?: {
-    completeness: number; // 0-1 score
-    professionalLevel: number; // 0-1 score
-    keywords: string[];
-    suggestedImprovements: string[];
-    detectedLanguages: string[];
-    confidence: number;
+  sections: DocumentSection[];
+  metadata: {
+    created: string;
+    lastModified: string;
   };
 }
 
@@ -242,29 +202,9 @@ export interface ProcessingOptions {
 }
 
 // Create an index file for better type exports
-export interface DocumentOptions extends ProcessingOptions {
-  extractImages?: boolean;
-  preserveFormatting?: boolean;
-  detectLanguage?: boolean;
-  performAnalysis?: boolean;
-  maxSectionLength?: number;
-  targetLanguage?: string;
-  confidenceThreshold?: number;
-  enhancementLevel?: 'light' | 'moderate' | 'aggressive';
-  targetPosition?: string;
-  targetIndustry?: string;
-  experienceLevel?: 'entry' | 'mid' | 'senior' | 'executive';
-  optimizationPreferences?: {
-    focusAreas: ('skills' | 'experience' | 'education' | 'achievements')[];
-    tone: 'professional' | 'confident' | 'modest' | 'innovative';
-    lengthPreference: 'concise' | 'detailed' | 'comprehensive';
-    specialEmphasis?: string[];
-  };
-  aiOptions?: {
-    model: 'gpt-3.5-turbo' | 'gpt-4' | 'claude-2';
-    temperature: number;
-    maxTokens: number;
-    multipleVariants?: boolean;
-    requireExplanations?: boolean;
-  };
+export interface DocumentOptions {
+  aiProcessing?: boolean;
+  maxTokens?: number;
+  model?: string;
+  exportFormat?: 'pdf' | 'docx';
 }

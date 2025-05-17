@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import { Document, Paragraph, TextRun, HeadingLevel } from 'docx'
+import { Document, Paragraph, TextRun, HeadingLevel, Packer } from 'docx'
 import { PDFDocument, rgb } from 'pdf-lib'
-import { FormattedDocument } from '@/types/document'
+import { FormattedDocument, DocumentContent } from '@/types/document'
 import { handleAPIError, APIError } from '../error';
 import { createAPIResponse, createErrorResponse } from '../responses';
 
@@ -17,8 +17,7 @@ async function generateDOCX(doc: FormattedDocument): Promise<Buffer> {
               new TextRun({
                 text: content.text,
                 bold: content.formatting.isBold,
-                italics: content.formatting.isItalic,
-                // Add more formatting as needed
+                italics: content.formatting.isItalic
               })
             ]
           })
@@ -28,7 +27,7 @@ async function generateDOCX(doc: FormattedDocument): Promise<Buffer> {
     }]
   })
 
-  return await document.save()
+  return await Packer.toBuffer(document)
 }
 
 async function generatePDF(doc: FormattedDocument): Promise<Uint8Array> {

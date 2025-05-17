@@ -1,8 +1,11 @@
-export const FILE_SIZE_LIMIT = 5 * 1024 * 1024 // 5MB
 export const ACCEPTED_FILE_TYPES = [
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-] as const
+] as const;
+
+export type AcceptedFileType = typeof ACCEPTED_FILE_TYPES[number];
+
+export const FILE_SIZE_LIMIT = 10 * 1024 * 1024; // 10MB
 
 export const MIN_TEXT_LENGTH = 100
 

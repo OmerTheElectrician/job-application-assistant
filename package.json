@@ -1,5 +1,5 @@
 {
-  "name": "bewerbungs-verbesserungs-webseite",
+  "name": "bewerbungs-optimizer",
   "version": "0.1.0",
   "private": true,
   "description": "AI-powered job application optimizer",
@@ -41,6 +41,7 @@
     "@radix-ui/react-toggle-group": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.6",
     "@types/pdfjs-dist": "^2.10.377",
+    "canvas": "^3.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",

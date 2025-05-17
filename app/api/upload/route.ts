@@ -2,13 +2,8 @@ import { CVData, APIResponse } from '@/types/api'
 import { validateEnv } from '@/config/env'
 import { FILE_SIZE_LIMIT, ACCEPTED_FILE_TYPES } from '@/config/constants'
 import { NextRequest, NextResponse } from "next/server"
-import { writeFile, mkdir } from "fs/promises"
-import { join } from "path"
-import { v4 as uuidv4 } from "uuid"
-// Updated document processing imports
-import { Document, Paragraph, TextRun } from 'docx'
+import { Document } from 'docx'
 import { PDFDocument } from 'pdf-lib'
-import * as pdfjs from 'pdfjs-dist'
 import mammoth from "mammoth"
 import pdfParse from "pdf-parse"
 import OpenAI from 'openai'
@@ -24,17 +19,14 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 })
 
-// Initialize PDF.js
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-
 // Helper function to extract text from PDF
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   try {
-    const data = await pdfParse(buffer)  // Pass Buffer directly
-    return data.text
+    const data = await pdfParse(buffer);
+    return data.text;
   } catch (error) {
-    console.error('Error extracting PDF text:', error)
-    throw new Error('Failed to extract text from PDF')
+    console.error('Error extracting PDF text:', error);
+    throw new Error('Failed to extract text from PDF');
   }
 }
 
@@ -109,7 +101,21 @@ async function getAIOptimizedCV(formattedDoc: FormattedDocument): Promise<Format
 }
 
 export async function POST(request: NextRequest) {
-  const { buffer, options } = await parseRequest(request);
-  const document = await DocumentService.processDocument(buffer, options);
-  return NextResponse.json({ document });
+  try {
+    const formData = await request.formData();
+    const file = formData.get("file") as File;
+    
+    await validateFileUpload(file);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    
+    const document = await processDocument(buffer, file.type);
+    return NextResponse.json({ document });
+    
+  } catch (error) {
+    console.error('Upload error:', error);
+    return NextResponse.json(
+      { error: 'File processing failed' },
+      { status: 500 }
+    );
+  }
 }

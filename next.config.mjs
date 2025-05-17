@@ -10,23 +10,23 @@ const nextConfig = {
     unoptimized: true,
   },
   output: 'standalone', // Add this for better deployment support
+  env: {
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
+  },
   experimental: {
     webpackBuildWorker: true,
     parallelServerCompiles: true,
     parallelServerBuildTraces: true
   },
   webpack: (config, { isServer }) => {
-    // Handle document files
-    config.module.rules.push({
-      test: /\.(pdf|docx)$/,
-      type: 'asset/resource',
-      generator: {
-        filename: 'static/documents/[name][ext]'
-      }
-    });
-
+    if (isServer) {
+      config.externals.push({
+        canvas: 'commonjs canvas',
+        'pdf-parse': 'commonjs pdf-parse'
+      });
+    }
     return config;
   }
 }
 
-export default nextConfig
+export default nextConfig;
