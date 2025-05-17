@@ -1,25 +1,39 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 
-export function useMobile() {
-  const [isMobile, setIsMobile] = useState(false)
+const MOBILE_BREAKPOINT = 640 // sm breakpoint in Tailwind
+const DEBOUNCE_DELAY = 250 // ms
+
+export function useMobile(): boolean {
+  const [isMobile, setIsMobile] = useState<boolean>(false)
+
+  const checkMobile = useCallback(() => {
+    const isMobileView = window.innerWidth < MOBILE_BREAKPOINT
+    if (isMobileView !== isMobile) {
+      setIsMobile(isMobileView)
+    }
+  }, [isMobile])
 
   useEffect(() => {
-    // Funktion zur Überprüfung, ob der Bildschirm mobil ist
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640) // sm-Breakpoint in Tailwind ist 640px
-    }
-
-    // Initiale Überprüfung
+    // Initial check
     checkMobile()
 
-    // Event-Listener für Fenstergrößenänderungen hinzufügen
-    window.addEventListener("resize", checkMobile)
+    // Debounced resize handler
+    let timeoutId: NodeJS.Timeout
+    const debouncedCheckMobile = () => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(checkMobile, DEBOUNCE_DELAY)
+    }
 
-    // Aufräumen
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
+    window.addEventListener("resize", debouncedCheckMobile)
+
+    // Cleanup
+    return () => {
+      clearTimeout(timeoutId)
+      window.removeEventListener("resize", debouncedCheckMobile)
+    }
+  }, [checkMobile])
 
   return isMobile
 }

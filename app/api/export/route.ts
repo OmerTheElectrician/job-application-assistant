@@ -1,52 +1,96 @@
-import { type NextRequest, NextResponse } from "next/server"
-import PDFDocument from "pdfkit"
-import { join } from "path"
-import { writeFile } from "fs/promises"
+import { NextRequest, NextResponse } from "next/server"
+import { Document, Paragraph, TextRun, HeadingLevel } from 'docx'
+import { PDFDocument, rgb } from 'pdf-lib'
+import { FormattedDocument } from '@/types/document'
+import { handleAPIError, APIError } from '../error';
+import { createAPIResponse, createErrorResponse } from '../responses';
+
+async function generateDOCX(doc: FormattedDocument): Promise<Buffer> {
+  const document = new Document({
+    sections: [{
+      properties: {},
+      children: doc.sections.flatMap(section => 
+        section.content.map(content => {
+          const paragraph = new Paragraph({
+            heading: content.formatting.isHeading ? HeadingLevel.HEADING_1 : undefined,
+            children: [
+              new TextRun({
+                text: content.text,
+                bold: content.formatting.isBold,
+                italics: content.formatting.isItalic,
+                // Add more formatting as needed
+              })
+            ]
+          })
+          return paragraph
+        })
+      )
+    }]
+  })
+
+  return await document.save()
+}
+
+async function generatePDF(doc: FormattedDocument): Promise<Uint8Array> {
+  const pdfDoc = await PDFDocument.create()
+  const page = pdfDoc.addPage()
+  const { width, height } = page.getSize()
+  
+  let yOffset = height - 50 // Start from top
+
+  for (const section of doc.sections) {
+    for (const content of section.content) {
+      const fontSize = content.formatting.isHeading ? 16 : 12
+      page.drawText(content.text, {
+        x: 50,
+        y: yOffset,
+        size: fontSize,
+        color: rgb(0, 0, 0)
+      })
+      yOffset -= fontSize + 10 // Space between lines
+    }
+  }
+
+  return await pdfDoc.save()
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { fileId, format, data } = await request.json()
+    const { document, format } = await request.json() as { 
+      document: FormattedDocument, 
+      format: 'pdf' | 'docx' 
+    };
 
-    if (!fileId || !format || !data) {
-      return NextResponse.json({ error: "Fehlende Daten für den Export" }, { status: 400 })
+    if (!document || !format) {
+      throw new APIError('Missing required fields', 400, 'INVALID_REQUEST');
     }
 
-    if (format !== "pdf") {
-      return NextResponse.json({ error: "Nur PDF-Export wird unterstützt" }, { status: 400 })
+    if (!['pdf', 'docx'].includes(format)) {
+      throw new APIError('Unsupported format', 400, 'INVALID_FORMAT');
     }
 
-    // Generate PDF
-    const pdfPath = join(process.cwd(), "exports", `${fileId}.pdf`)
-    const pdfDoc = new PDFDocument()
+    let buffer: Buffer | Uint8Array
+    let contentType: string
+    let fileName: string
 
-    // Collect the PDF data into a buffer
-    const pdfBuffer: Uint8Array[] = []
-    pdfDoc.on("data", pdfBuffer.push.bind(pdfBuffer))
-    pdfDoc.on("end", async () => {
-      const pdfData = Buffer.concat(pdfBuffer)
-      await writeFile(pdfPath, pdfData)
+    if (format === 'pdf') {
+      buffer = await generatePDF(document)
+      contentType = 'application/pdf'
+      fileName = 'optimized-cv.pdf'
+    } else {
+      buffer = await generateDOCX(document)
+      contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      fileName = 'optimized-cv.docx'
+    }
+
+    return new NextResponse(buffer, {
+      headers: {
+        'Content-Type': contentType,
+        'Content-Disposition': `attachment; filename="${fileName}"`
+      }
     })
 
-    // Add content to the PDF
-    pdfDoc.fontSize(20).text("Bewerbung Optimiert", { align: "center" })
-    pdfDoc.moveDown()
-    pdfDoc.fontSize(12).text(`Name: ${data.personalInfo.name}`)
-    pdfDoc.text(`Email: ${data.personalInfo.email}`)
-    pdfDoc.text(`Phone: ${data.personalInfo.phone}`)
-    pdfDoc.text(`Address: ${data.personalInfo.address}`)
-    pdfDoc.moveDown()
-    pdfDoc.text("Skills:")
-    data.skills.forEach((skill: string) => pdfDoc.text(`- ${skill}`))
-    pdfDoc.end()
-
-    return NextResponse.json({
-      message: "Dokument erfolgreich generiert",
-      fileId,
-      format,
-      documentUrl: `/exports/${fileId}.pdf`,
-    })
   } catch (error) {
-    console.error("Fehler beim Exportieren:", error)
-    return NextResponse.json({ error: "Fehler beim Exportieren des Dokuments" }, { status: 500 })
+    return handleAPIError(error);
   }
 }

@@ -1,5 +1,8 @@
 import { FileText, CheckCircle, Download, ArrowRight, CheckCheck } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { CVData, APIResponse } from '@/types/api'
+import { validateEnv } from '@/config/env'
+import { FILE_SIZE_LIMIT, ACCEPTED_FILE_TYPES } from '@/config/constants'
 
 export function HowToGuide() {
   const steps = [

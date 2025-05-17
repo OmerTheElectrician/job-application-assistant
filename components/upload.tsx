@@ -2,6 +2,10 @@
 
 import type React from "react"
 
+import { CVData, APIResponse } from '@/types/api'
+import { validateEnv } from '@/config/env'
+import { FILE_SIZE_LIMIT, ACCEPTED_FILE_TYPES } from '@/config/constants'
+
 import { useState } from "react"
 import { UploadIcon, File, X, AlertCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"

@@ -1,29 +1,26 @@
 "use client"
 
-// Inspired by react-hot-toast library
 import * as React from "react"
+import type { ToastActionElement, ToastProps } from "@/components/ui/toast"
 
-import type {
-  ToastActionElement,
-  ToastProps,
-} from "@/components/ui/toast"
+// Constants with explanatory comments
+const TOAST_LIMIT = 1 // Maximum number of toasts shown simultaneously
+const TOAST_REMOVE_DELAY = 5000 // 5 seconds (current value seems too long at 1000000ms)
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
-
-type ToasterToast = ToastProps & {
-  id: string
-  title?: React.ReactNode
-  description?: React.ReactNode
-  action?: ToastActionElement
-}
-
+// Improve type definitions with readonly properties
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
   UPDATE_TOAST: "UPDATE_TOAST",
   DISMISS_TOAST: "DISMISS_TOAST",
   REMOVE_TOAST: "REMOVE_TOAST",
 } as const
+
+type ToasterToast = Readonly<ToastProps & {
+  id: string
+  title?: React.ReactNode
+  description?: React.ReactNode
+  action?: ToastActionElement
+}>
 
 let count = 0
 
@@ -34,26 +31,16 @@ function genId() {
 
 type ActionType = typeof actionTypes
 
+// Add strict type checking for action types
 type Action =
-  | {
-      type: ActionType["ADD_TOAST"]
-      toast: ToasterToast
-    }
-  | {
-      type: ActionType["UPDATE_TOAST"]
-      toast: Partial<ToasterToast>
-    }
-  | {
-      type: ActionType["DISMISS_TOAST"]
-      toastId?: ToasterToast["id"]
-    }
-  | {
-      type: ActionType["REMOVE_TOAST"]
-      toastId?: ToasterToast["id"]
-    }
+  | { type: typeof actionTypes.ADD_TOAST; toast: ToasterToast }
+  | { type: typeof actionTypes.UPDATE_TOAST; toast: Partial<ToasterToast> }
+  | { type: typeof actionTypes.DISMISS_TOAST; toastId?: string }
+  | { type: typeof actionTypes.REMOVE_TOAST; toastId?: string }
 
 interface State {
-  toasts: ToasterToast[]
+  // Add immutable state interface
+  readonly toasts: ReadonlyArray<ToasterToast>
 }
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
@@ -177,6 +164,10 @@ function useToast() {
   React.useEffect(() => {
     listeners.push(setState)
     return () => {
+      // Clear timeouts on unmount
+      toastTimeouts.forEach((timeout) => clearTimeout(timeout))
+      toastTimeouts.clear()
+      
       const index = listeners.indexOf(setState)
       if (index > -1) {
         listeners.splice(index, 1)

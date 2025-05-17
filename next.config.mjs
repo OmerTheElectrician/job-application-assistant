@@ -1,10 +1,3 @@
-let userConfig = undefined
-try {
-  userConfig = await import('./v0-user-next.config')
-} catch (e) {
-  // ignore error
-}
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -16,32 +9,23 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  output: 'standalone', // Add this for better deployment support
   experimental: {
     webpackBuildWorker: true,
-    parallelServerBuildTraces: true,
     parallelServerCompiles: true,
+    parallelServerBuildTraces: true
   },
-}
-
-mergeConfig(nextConfig, userConfig)
-
-function mergeConfig(nextConfig, userConfig) {
-  if (!userConfig) {
-    return
-  }
-
-  for (const key in userConfig) {
-    if (
-      typeof nextConfig[key] === 'object' &&
-      !Array.isArray(nextConfig[key])
-    ) {
-      nextConfig[key] = {
-        ...nextConfig[key],
-        ...userConfig[key],
+  webpack: (config, { isServer }) => {
+    // Handle document files
+    config.module.rules.push({
+      test: /\.(pdf|docx)$/,
+      type: 'asset/resource',
+      generator: {
+        filename: 'static/documents/[name][ext]'
       }
-    } else {
-      nextConfig[key] = userConfig[key]
-    }
+    });
+
+    return config;
   }
 }
 

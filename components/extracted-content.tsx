@@ -2,6 +2,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useMobile } from "@/hooks/use-mobile"
+import { CVData, APIResponse } from '@/types/api'
+import { validateEnv } from '@/config/env'
+import { FILE_SIZE_LIMIT, ACCEPTED_FILE_TYPES } from '@/config/constants'
 
 interface PersonalInfo {
   name: string

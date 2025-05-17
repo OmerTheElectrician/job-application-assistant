@@ -1,3 +1,6 @@
+import { CVData, APIResponse } from '@/types/api'
+import { validateEnv } from '@/config/env'
+import { FILE_SIZE_LIMIT, ACCEPTED_FILE_TYPES } from '@/config/constants'
 export function Hero() {
   return (
     <section className="py-8 sm:py-12 md:py-16 text-center">

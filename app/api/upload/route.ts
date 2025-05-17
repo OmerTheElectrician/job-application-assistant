@@ -1,99 +1,115 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { CVData, APIResponse } from '@/types/api'
+import { validateEnv } from '@/config/env'
+import { FILE_SIZE_LIMIT, ACCEPTED_FILE_TYPES } from '@/config/constants'
+import { NextRequest, NextResponse } from "next/server"
 import { writeFile, mkdir } from "fs/promises"
 import { join } from "path"
 import { v4 as uuidv4 } from "uuid"
-import pdfParse from "pdf-parse"
+// Updated document processing imports
+import { Document, Paragraph, TextRun } from 'docx'
+import { PDFDocument } from 'pdf-lib'
+import * as pdfjs from 'pdfjs-dist'
 import mammoth from "mammoth"
+import pdfParse from "pdf-parse"
+import OpenAI from 'openai'
+import { processDocument } from '@/utils/documentProcessors';
+import { ProcessingOptions } from '@/types/document';
+import { validateFileUpload } from '../validation';
+import { createAPIResponse, createErrorResponse } from '../responses';
+import { ErrorCodes } from '../constants';
+import { FormattedDocument } from '@/types/document';
+import { DocumentService } from '@/services/documentService';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+})
+
+// Initialize PDF.js
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 // Helper function to extract text from PDF
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
-  const data = await pdfParse(buffer)
-  return data.text
+  try {
+    const data = await pdfParse(buffer)  // Pass Buffer directly
+    return data.text
+  } catch (error) {
+    console.error('Error extracting PDF text:', error)
+    throw new Error('Failed to extract text from PDF')
+  }
 }
 
 // Helper function to extract text from DOCX
 async function extractTextFromDOCX(buffer: Buffer): Promise<string> {
-  const { value } = await mammoth.extractRawText({ buffer })
-  return value
+  try {
+    const { value } = await mammoth.extractRawText({ 
+      buffer: buffer  // Pass Buffer directly
+    })
+    return value
+  } catch (error) {
+    console.error('Error extracting DOCX text:', error)
+    throw new Error('Failed to extract text from DOCX')
+  }
+}
+
+// Helper function to get AI optimized text
+async function getAIOptimizedCV(formattedDoc: FormattedDocument): Promise<FormattedDocument> {
+  const prompt = `
+    Als erfahrener Bewerbungsexperte, optimiere diese Bewerbung professionell.
+    Behalte die Formatierung bei und verbessere den Inhalt:
+
+    ${formattedDoc.sections.map(section => {
+      const format = [];
+      if (section.formatting.isHeading) format.push('[HEADING]');
+      if (section.formatting.isBold) format.push('[BOLD]');
+      if (section.formatting.isList) format.push('[LIST]');
+      return `${format.join(' ')}${section.text}`;
+    }).join('\n')}
+
+    Achte besonders auf:
+    - Professionelle Ausdrucksweise
+    - Klare Darstellung der Qualifikationen
+    - Überzeugenden Schreibstil
+    - Relevante Schlüsselwörter
+    
+    Gib nur den optimierten Text zurück.
+  `
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-3.5-turbo",
+    messages: [
+      {
+        role: "system",
+        content: "Du bist ein Experte für Bewerbungsoptimierung. Behalte die Formatierungstags bei."
+      },
+      {
+        role: "user",
+        content: prompt
+      }
+    ],
+    temperature: 0.7,
+    max_tokens: 2000
+  });
+
+  // Parse AI response back into formatted document
+  const optimizedSections = completion.choices[0].message.content?.split('\n')
+    .map(line => {
+      const formatting = {
+        isHeading: line.includes('[HEADING]'),
+        isBold: line.includes('[BOLD]'),
+        isList: line.includes('[LIST]')
+      };
+      const text = line.replace(/\[(HEADING|BOLD|LIST)\]/g, '').trim();
+      return { text, formatting };
+    }) || formattedDoc.sections;
+
+  return {
+    sections: optimizedSections,
+    metadata: formattedDoc.metadata
+  };
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const formData = await request.formData()
-    const file = formData.get("file") as File
-
-    if (!file) {
-      return NextResponse.json({ error: "Keine Datei hochgeladen" }, { status: 400 })
-    }
-
-    // Check file type
-    if (
-      file.type !== "application/pdf" &&
-      file.type !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    ) {
-      return NextResponse.json({ error: "Nur PDF- und DOCX-Dateien sind erlaubt" }, { status: 400 })
-    }
-
-    // Generate a unique ID for the file
-    const id = uuidv4()
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-
-    // Create the uploads folder if it doesn't exist
-    const uploadDir = join(process.cwd(), "uploads")
-    await mkdir(uploadDir, { recursive: true })
-    const filePath = join(uploadDir, `${id}-${file.name}`)
-    await writeFile(filePath, buffer)
-
-    // Extract text from the file
-    let extractedText = ""
-    if (file.type === "application/pdf") {
-      extractedText = await extractTextFromPDF(buffer)
-    } else if (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-      extractedText = await extractTextFromDOCX(buffer)
-    }
-
-    // Mock structured data (you can replace this with real parsing logic)
-    const mockData = {
-      personalInfo: {
-        name: "Max Mustermann",
-        email: "max.mustermann@example.com",
-        phone: "+49 123 456789",
-        address: "Musterstraße 123, 12345 Berlin",
-      },
-      education: [
-        {
-          degree: "Bachelor of Science in Informatik",
-          institution: "Technische Universität Berlin",
-          location: "Berlin",
-          dates: "2015 - 2019",
-        },
-      ],
-      experience: [
-        {
-          title: "Software Entwickler",
-          company: "Tech Solutions GmbH",
-          location: "Berlin",
-          dates: "2019 - Heute",
-          responsibilities: [
-            "Entwicklung und Wartung von Webanwendungen mit React und Node.js",
-            "Zusammenarbeit mit funktionsübergreifenden Teams",
-            "Implementierung von CI/CD-Pipelines",
-          ],
-        },
-      ],
-      skills: ["JavaScript", "React", "Node.js", "HTML", "CSS", "Git"],
-    }
-
-    return NextResponse.json({
-      message: "Datei erfolgreich hochgeladen und analysiert",
-      fileId: id,
-      fileName: file.name,
-      extractedText,
-      data: mockData,
-    })
-  } catch (error) {
-    console.error("Fehler beim Hochladen oder Analysieren:", error)
-    return NextResponse.json({ error: "Fehler beim Hochladen oder Analysieren der Datei" }, { status: 500 })
-  }
+  const { buffer, options } = await parseRequest(request);
+  const document = await DocumentService.processDocument(buffer, options);
+  return NextResponse.json({ document });
 }
