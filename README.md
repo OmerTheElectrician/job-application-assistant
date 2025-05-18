@@ -33,7 +33,7 @@ A web application that helps optimize job applications using AI. Built with Next
    npm run dev
    ```
 
-## Project Structure
+## Project Structure (Likely different due to later changes)
 - `/app` - Next.js app directory with routes and API endpoints
 - `/components` - Reusable UI components
 - `/styles` - Global styles and Tailwind configuration
