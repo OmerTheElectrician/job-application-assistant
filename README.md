@@ -2,6 +2,7 @@ SCHULE FOS\INFORMATIK WEBSEITEN\2-ProjektBewerbungsOptimierungsWebseite\bewerbun
 # Bewerbungs-Optimizer
 
 A web application that helps optimize job applications using AI. Built with Next.js and OpenAI.
+(STILL UNDER HEAVY CONSTRUCTION)
 
 ## Features
 - Upload CV/resume files (PDF/DOCX)
