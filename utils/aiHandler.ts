@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { FormattedDocument } from '@/types/document';
+import { FormattedDocument, DocumentContent } from '@/types/document';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -9,13 +9,15 @@ export async function optimizeFormattedCV(doc: FormattedDocument): Promise<Forma
   const prompt = `
     Optimize this CV while preserving formatting:
 
-    ${doc.sections.map(section => {
-      const format = [];
-      if (section.formatting.isHeading) format.push('[HEADING]');
-      if (section.formatting.isBold) format.push('[BOLD]');
-      if (section.formatting.isList) format.push('[LIST]');
-      return `${format.join(' ')}${section.text}`;
-    }).join('\n')}
+    ${doc.sections.map(section => 
+      section.content.map(content => {
+        const format = [];
+        if (content.formatting.isHeading) format.push('[HEADING]');
+        if (content.formatting.isBold) format.push('[BOLD]');
+        if (content.formatting.isList) format.push('[LIST]');
+        return `${format.join(' ')}${content.text}`;
+      }).join('\n')
+    ).join('\n\n')}
 
     Improve the content while keeping the formatting tags.
     Make it more professional and impactful.
@@ -39,18 +41,27 @@ export async function optimizeFormattedCV(doc: FormattedDocument): Promise<Forma
 
   // Parse AI response back into formatted document
   const response = completion.choices[0].message.content || '';
-  const sections = response.split('\n').map(line => {
-    const formatting = {
-      isHeading: line.includes('[HEADING]'),
-      isBold: line.includes('[BOLD]'),
-      isList: line.includes('[LIST]')
-    };
-    const text = line.replace(/\[(HEADING|BOLD|LIST)\]/g, '').trim();
-    return { text, formatting };
-  });
+  const sections = response.split('\n\n')
+    .filter(sectionText => sectionText.trim().length > 0)
+    .map(sectionText => ({
+      content: sectionText.split('\n')
+        .filter(line => line.trim().length > 0)
+        .map(line => ({
+          text: line.replace(/\[(HEADING|BOLD|LIST)\]/g, '').trim(),
+          formatting: {
+            isHeading: line.includes('[HEADING]'),
+            isBold: line.includes('[BOLD]'),
+            isItalic: false,
+            isList: line.includes('[LIST]')
+          }
+        }))
+    }));
 
   return {
     sections,
-    metadata: doc.metadata
+    metadata: {
+      ...doc.metadata,
+      lastModified: new Date().toISOString()
+    }
   };
 }

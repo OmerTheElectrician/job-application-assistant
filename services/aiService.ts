@@ -55,25 +55,32 @@ export class AIService {
   }
 
   private static createPrompt(doc: FormattedDocument): string {
-    return doc.sections.map(section => {
-      const format = [];
-      if (section.formatting.isHeading) format.push('[HEADING]');
-      if (section.formatting.isBold) format.push('[BOLD]');
-      if (section.formatting.isList) format.push('[LIST]');
-      return `${format.join(' ')}${section.text}`;
-    }).join('\n');
+    return doc.sections.map(section => 
+      section.content.map(content => {
+        const format = [];
+        if (content.formatting.isHeading) format.push('[HEADING]');
+        if (content.formatting.isBold) format.push('[BOLD]');
+        if (content.formatting.isList) format.push('[LIST]');
+        return `${format.join(' ')}${content.text}`;
+      }).join('\n')
+    ).join('\n\n');
   }
 
   private static parseResponse(response: string, originalDoc: FormattedDocument): FormattedDocument {
-    const sections = response.split('\n')
-      .filter(line => line.trim().length > 0)
-      .map(line => ({
-        text: line.replace(/\[(HEADING|BOLD|LIST)\]/g, '').trim(),
-        formatting: {
-          isHeading: line.includes('[HEADING]'),
-          isBold: line.includes('[BOLD]'),
-          isList: line.includes('[LIST]')
-        }
+    const sections = response.split('\n\n')
+      .filter(sectionText => sectionText.trim().length > 0)
+      .map(sectionText => ({
+        content: sectionText.split('\n')
+          .filter(line => line.trim().length > 0)
+          .map(line => ({
+            text: line.replace(/\[(HEADING|BOLD|LIST)\]/g, '').trim(),
+            formatting: {
+              isHeading: line.includes('[HEADING]'),
+              isBold: line.includes('[BOLD]'),
+              isItalic: false,
+              isList: line.includes('[LIST]')
+            }
+          }))
       }));
 
     return {

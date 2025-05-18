@@ -49,13 +49,15 @@ async function getAIOptimizedCV(formattedDoc: FormattedDocument): Promise<Format
     Als erfahrener Bewerbungsexperte, optimiere diese Bewerbung professionell.
     Behalte die Formatierung bei und verbessere den Inhalt:
 
-    ${formattedDoc.sections.map(section => {
-      const format = [];
-      if (section.formatting.isHeading) format.push('[HEADING]');
-      if (section.formatting.isBold) format.push('[BOLD]');
-      if (section.formatting.isList) format.push('[LIST]');
-      return `${format.join(' ')}${section.text}`;
-    }).join('\n')}
+    ${formattedDoc.sections.map(section => 
+      section.content.map(content => {
+        const format = [];
+        if (content.formatting.isHeading) format.push('[HEADING]');
+        if (content.formatting.isBold) format.push('[BOLD]');
+        if (content.formatting.isList) format.push('[LIST]');
+        return `${format.join(' ')}${content.text}`;
+      }).join('\n')
+    ).join('\n\n')}
 
     Achte besonders auf:
     - Professionelle Ausdrucksweise
@@ -64,7 +66,7 @@ async function getAIOptimizedCV(formattedDoc: FormattedDocument): Promise<Format
     - Relevante Schlüsselwörter
     
     Gib nur den optimierten Text zurück.
-  `
+  `;
 
   const completion = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
@@ -83,20 +85,25 @@ async function getAIOptimizedCV(formattedDoc: FormattedDocument): Promise<Format
   });
 
   // Parse AI response back into formatted document
-  const optimizedSections = completion.choices[0].message.content?.split('\n')
-    .map(line => {
-      const formatting = {
-        isHeading: line.includes('[HEADING]'),
-        isBold: line.includes('[BOLD]'),
-        isList: line.includes('[LIST]')
-      };
-      const text = line.replace(/\[(HEADING|BOLD|LIST)\]/g, '').trim();
-      return { text, formatting };
-    }) || formattedDoc.sections;
+  const optimizedContent = completion.choices[0].message.content?.split('\n\n')
+    .map(sectionText => ({
+      content: sectionText.split('\n').map(line => ({
+        text: line.replace(/\[(HEADING|BOLD|LIST)\]/g, '').trim(),
+        formatting: {
+          isHeading: line.includes('[HEADING]'),
+          isBold: line.includes('[BOLD]'),
+          isItalic: false,
+          isList: line.includes('[LIST]')
+        }
+      }))
+    })) || formattedDoc.sections;
 
   return {
-    sections: optimizedSections,
-    metadata: formattedDoc.metadata
+    sections: optimizedContent,
+    metadata: {
+      ...formattedDoc.metadata,
+      lastModified: new Date().toISOString()
+    }
   };
 }
 

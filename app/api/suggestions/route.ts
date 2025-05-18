@@ -51,25 +51,40 @@ async function analyzeDocument(doc: FormattedDocument): Promise<AIAnalysisResult
   }
 }
 
-function parseSectionScores(analysis: string) {
-  const scores = {
+type ScoreMetrics = {
+  relevance: number;
+  completeness: number;
+  impact: number;
+  clarity: number;
+};
+
+type SectionScores = {
+  [key in 'personalInfo' | 'experience' | 'education' | 'skills']: ScoreMetrics;
+};
+
+function parseSectionScores(analysis: string): SectionScores {
+  const scores: SectionScores = {
     personalInfo: { relevance: 0, completeness: 0, impact: 0, clarity: 0 },
     experience: { relevance: 0, completeness: 0, impact: 0, clarity: 0 },
     education: { relevance: 0, completeness: 0, impact: 0, clarity: 0 },
     skills: { relevance: 0, completeness: 0, impact: 0, clarity: 0 }
-  }
+  };
 
   // Extract scores from AI response using regex
-  const scoreRegex = /(\w+):\s*(\d+)/g
-  let match
+  const scoreRegex = /(\w+):\s*(\d+)/g;
+  let match;
   while ((match = scoreRegex.exec(analysis)) !== null) {
-    const [_, section, score] = match
-    if (scores[section]) {
-      scores[section].relevance = parseInt(score)
+    const [_, section, score] = match;
+    if (isValidSection(section)) {
+      scores[section].relevance = parseInt(score);
     }
   }
 
-  return scores
+  return scores;
+}
+
+function isValidSection(section: string): section is keyof SectionScores {
+  return ['personalInfo', 'experience', 'education', 'skills'].includes(section);
 }
 
 function parseOverallAssessment(analysis: string) {

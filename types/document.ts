@@ -81,7 +81,6 @@ export interface DocumentContent {
 export interface DocumentSection {
   content: DocumentContent[];
   type?: string;
-  title?: string;
 }
 
 export interface FormattedDocument {

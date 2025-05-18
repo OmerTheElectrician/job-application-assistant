@@ -26,16 +26,19 @@ export async function extractTextFromDOCX(buffer: Buffer): Promise<string> {
 
 export async function generateFormattedDocument(text: string): Promise<FormattedDocument> {
   const sections = text.split('\n\n').map(section => ({
-    text: section.trim(),
-    formatting: {
-      isHeading: false,
-      isBold: false,
-      isList: false
-    }
+    content: [{
+      text: section.trim(),
+      formatting: {
+        isHeading: false,
+        isBold: false,
+        isItalic: false,
+        isList: false
+      }
+    }]
   }));
 
   return {
-    sections,
+    sections: sections.filter(s => s.content[0].text.length > 0),
     metadata: {
       created: new Date().toISOString(),
       lastModified: new Date().toISOString()
@@ -66,16 +69,19 @@ export class DocumentService {
 
   private static formatDocument(text: string, options: DocumentOptions): FormattedDocument {
     const sections = text.split('\n\n').map(section => ({
-      text: section.trim(),
-      formatting: {
-        isHeading: false,
-        isBold: false,
-        isList: section.startsWith('- ') || section.startsWith('• ')
-      }
+      content: [{
+        text: section.trim(),
+        formatting: {
+          isHeading: false,
+          isBold: false,
+          isItalic: false,
+          isList: section.startsWith('- ') || section.startsWith('• ')
+        }
+      }]
     }));
 
     return {
-      sections: sections.filter(s => s.text.length > 0),
+      sections: sections.filter(s => s.content[0].text.length > 0),
       metadata: {
         created: new Date().toISOString(),
         lastModified: new Date().toISOString()
@@ -107,14 +113,17 @@ export class DocumentService {
     const fontSize = 12;
 
     document.sections.forEach(section => {
-      const text = section.text;
-      page.drawText(text, {
-        x: 50,
-        y,
-        size: section.formatting.isHeading ? fontSize + 4 : fontSize,
-        font: section.formatting.isHeading || section.formatting.isBold ? boldFont : regularFont
+      section.content.forEach(content => {
+        page.drawText(content.text, {
+          x: 50,
+          y,
+          size: content.formatting.isHeading ? fontSize + 4 : fontSize,
+          font: content.formatting.isHeading || content.formatting.isBold ? boldFont : regularFont
+        });
+        y -= content.formatting.isHeading ? 30 : 20;
       });
-      y -= section.formatting.isHeading ? 30 : 20;
+      // Add extra space between sections
+      y -= 10;
     });
 
     return Buffer.from(await pdfDoc.save());
@@ -124,17 +133,20 @@ export class DocumentService {
     const doc = new Document({
       sections: [{
         properties: {},
-        children: document.sections.map(section => {
-          return new Paragraph({
-            children: [
-              new TextRun({
-                text: section.text,
-                bold: section.formatting.isBold || section.formatting.isHeading,
-                size: section.formatting.isHeading ? 32 : 24
-              })
-            ]
-          });
-        })
+        children: document.sections.flatMap(section => 
+          section.content.map(content => 
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: content.text,
+                  bold: content.formatting.isBold || content.formatting.isHeading,
+                  italics: content.formatting.isItalic,
+                  size: content.formatting.isHeading ? 32 : 24
+                })
+              ]
+            })
+          )
+        )
       }]
     });
 
